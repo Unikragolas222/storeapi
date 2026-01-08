@@ -1,6 +1,6 @@
 export interface Product {
     id: number;
-    created_at: Date;
+    created_at?: Date;
     title: string;
     price: number;
     description: string;
