@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import * as express from "express";
 import productRoutes from "./endpoints/products";
 

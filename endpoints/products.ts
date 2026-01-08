@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { CreateProductoDTO, Product, UpdateProductoDTO } from "../interfaces/product";
+import { pool } from "../database/db"
 
 const router = Router();
 
@@ -247,42 +248,45 @@ const products: Product[] = [
 ]
 
 router.get('/', (req, res) => {
-  res.json(products);
-})
+  pool.query('SELECT * FROM products').then(result => {
+    res.json(result.rows);
+}).catch(error => {
+  console.error('Error executing query', error);
+  res.status(500).json({ error: 'Internal Server Error' });
+});
+});
+
 
 router.get('/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const product = products.find(product => product.id === id);
-  if (product) {
-    res.json(product);
-  } else {
-    res.status(404).send('Product not found');
-  }
-})
+  pool.query('SELECT * FROM products WHERE id = $1', [req.params.id]).then(result => {
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'Product not found' });
+    } else {
+      res.json(result.rows);
+    }
+  }).catch(error => {
+    console.error('Error executing query', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  });
+});
 
 router.post('/', (req, res) => {
-  try {
-    const { title, price, description, category, image, rating }: CreateProductoDTO = req.body;
-    if (!title || !price || !description || !category || !image || !rating) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
+  const product: CreateProductoDTO = req.body;
+  pool.query('INSERT INTO products (title, price, description, category, image, rating) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+    [product.title,
+    product.price,
+    product.description,
+    product.category,
+    product.image,
+    product.rating]).then(result => {
+      res.json({ message: "Product created ", id: result.rows[0].id});
+      }).catch(error => {
+      console.error('Error executing query', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    });
+});
 
-    const newProduct: Product = {
-      id: products.length + 1,
-      title,
-      price,
-      description,
-      category,
-      image,
-      rating
-    };
-
-    products.push(newProduct);
-    res.status(201).json(newProduct);
-  } catch (error) {
-    res.status(500).json({ error: 'Error creating product' });
-
-  }})
+/*
 
 router.put('/:id', (req, res) => {
   const id = parseInt(req.params.id);
@@ -326,5 +330,6 @@ router.put('/:id', (req, res) => {
     res.status(404).json({ error: 'Product not found' });
   }
 })
+*/
 
 export default router;

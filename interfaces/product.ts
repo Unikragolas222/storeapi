@@ -1,5 +1,6 @@
 export interface Product {
     id: number;
+    created_at: Date;
     title: string;
     price: number;
     description: string;
@@ -11,5 +12,5 @@ export interface Product {
     };
 }
 
-export type CreateProductoDTO = Omit<Product, 'id'>;
+export type CreateProductoDTO = Omit<Product, 'id' | 'created_at'>;
 export type UpdateProductoDTO = Partial<Product>;
