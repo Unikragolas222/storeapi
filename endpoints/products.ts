@@ -286,50 +286,40 @@ router.post('/', (req, res) => {
     });
 });
 
-/*
 
 router.put('/:id', (req, res) => {
   const id = parseInt(req.params.id);
-  const productIndex = products.findIndex(product => product.id === id);
-  if (productIndex !== -1) {
-    const product = products[productIndex];
-    const updatedProduct: UpdateProductoDTO = req.body;
-    products[productIndex] = {
-      ...product,
-      ...updatedProduct
-    };
-    res.json(products[productIndex]);
+  const { title, price, description, category, image, rating }: UpdateProductoDTO = req.body;
+  pool.query(
+    'UPDATE products SET title = COALESCE($1, title), price = COALESCE($2, price), description = COALESCE($3, description), category = COALESCE($4, category), image = COALESCE($5, image), rating = COALESCE($6, rating) WHERE id = $7 RETURNING *',
+    [title, price, description, category, image, rating, id]
+  ).then(result => {
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'Product not found' });
     } else {
-    res.status(404).json({ error: 'Product not found' });
-  }
-
-})
+      res.json(result.rows[0]);
+    }
+  }).catch(error => {
+    console.error('Error executing query', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  });
+});
 
 router.delete('/:id', (req, res) => {
   const id = parseInt(req.params.id);
-  const productIndex = products.findIndex(p => p.id === id);
+  pool.query('DELETE FROM products WHERE id = $1 RETURNING *', [id])
+    .then(result => {
+      if (result.rowCount === 0) {
+        res.status(404).json({ error: 'Product not found' });
+      } else {
+        res.json({ message: 'Product deleted successfully', product: result.rows[0] });
+      }
+    })
+    .catch(error => {
+      console.error('Error executing query', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    });
+});
 
-  if (productIndex !== -1) {
-    const [deletedProduct] = products.splice(productIndex, 1);
-    res.json(deletedProduct);
-  } else {
-    res.status(404).json({ error: 'Product not found' });
-  }
-})
-
-router.put('/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const productIndex = products.findIndex(p => p.id === id);
-
-  if (productIndex !== -1) {
-    const product = products[productIndex];
-    const updatedProduct: UpdateProductoDTO = req.body;
-    products[productIndex] = { ...product, ...updatedProduct };
-    res.json(products[productIndex]);
-  } else {
-    res.status(404).json({ error: 'Product not found' });
-  }
-})
-*/
 
 export default router;
