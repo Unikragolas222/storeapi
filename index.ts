@@ -12,8 +12,16 @@ app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
 
 app.get('/', (req, res) => {
-  res.send('HEAAAALLLLOOOOO');
+  res.json({
+    status: 'OK',
+    message: 'Store API running',
+    endpoints: {
+      products: '/api/products',
+      users: '/api/users'
+    }
+  });
 });
+
 
 app.listen(port, () => {
   console.log(`Listening on http://localhost:${port}`);
